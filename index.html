@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISBN World</title>
+    <style>
+        :root {
+            --bg: #555;
+            --padding: 15px;
+            --margin: 10px;
+            --border-radius: 10px;
+            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            --button-bg: #1a73e8;
+            --button-color: white;
+            --text-color: #ffffff;
+            --subtext-color: #555;
+            --muted-color: #777;
+            --control-size: 40px;
+            --control-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            --input-border: 1px solid #ccc;
+            --input-bg: #fff;
+            --overlay-bg: rgba(0, 0, 0, 0.7)
+        }
+
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: rgb(22, 21, 21);
+        }
+
+        body,
+        html {
+            font: 1em sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+
+
+        .canvas-container {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+
+        canvas {
+            display: block;
+        }
+
+
+        .right {
+            right: var(--padding);
+
+        }
+
+        .left {
+            left: var(--padding);
+        }
+
+
+        select {
+            width: 100%;
+            padding: 12px;
+            background: #252525e0;
+            /* border: var(--input-border); */
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            color: var(--text-color);
+            appearance: none;
+        }
+
+        input[type="text"] {
+            padding: var(--padding);
+            background: #252525e0;
+
+            border: var(--input-border);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            color: var(--text-color);
+            appearance: none;
+        }
+
+        select,
+        input[type="color"] {
+            cursor: pointer;
+        }
+
+        .panel {
+            position: absolute;
+            color: white;
+            /* background: rgba(70, 70, 70, 0.466); */
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .panel .image-section {
+            width: 100%;
+            height: 150px;
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
+            background: url('nyc-thumbnail.jpg') center/cover no-repeat;
+        }
+
+
+        .panel .text-section {
+            padding: var(--padding);
+        }
+
+        .panel h2 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--text-color);
+        }
+
+        .panel p {
+            margin: var(--margin) 0;
+            font-size: 14px;
+        }
+
+        .panel p:first-of-type {
+            color: var(--subtext-color);
+        }
+
+        .panel p:last-of-type {
+            color: var(--muted-color);
+            line-height: 1.5;
+        }
+
+
+        .vertical-middle {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+
+        .action-button {
+            font-size: 14px;
+            color: var(--button-color);
+            background: var(--button-bg);
+            border: none;
+
+        }
+
+
+
+
+
+        .coord-overlay {
+            position: fixed;
+            left: var(--padding);
+            top: var(--padding);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .select-list {
+            list-style: none;
+            font-family: monospace;
+        }
+
+        .panel {
+            position: absolute;
+        }
+
+        .panel-container {
+            /* padding: var(--padding); */
+        }
+
+        .panel-sidebar {
+            bottom: 40px;
+
+        }
+
+
+        .color-input {
+            border: none;
+            /* width: 40px; */
+            /* height: 40px; */
+            border-radius: 50%;
+        }
+
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        input[type="color"] {
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .list-item-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 4fr 1fr;
+            gap: 10px;
+            align-items: center;
+            /* margin: var(--margin) 0; */
+            /* padding: var(--padding); */
+            /* background: rgba(128, 128, 128, 0.377); */
+            /* border-radius: var(--border-radius); */
+        }
+
+        /* .circular-button {
+            transform: rotate(45deg);
+            width: 30px; 
+           height: 30px;
+            border-radius: 50%;
+            border: none;
+        } */
+
+        /* .circular-button:hover {
+            background: #8080806e;
+        } */
+
+        ul {
+            padding: 0;
+        }
+
+
+        .checkmark {
+            /* width: 20px; */
+            /* height: 20px; */
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+            position: relative;
+        }
+
+        .toolbar {
+            display: grid;
+            position: absolute;
+            bottom: calc(var(--padding)*4);
+            right: var(--padding);
+            gap: var(--padding);
+        }
+
+        button {
+            padding: 10px;
+
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        button i {
+            font-size: 20px;
+        }
+
+        button:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .active {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+
+
+
+<body>
+
+    <div class="panel left panel-sidebar ">
+        <div class="panel-container">
+            <select id="map-selector">
+                <option value="" disabled selected>Add Layer</option>
+                {% for image in images %}
+                <option value="{{image[1]}}">{{image[0]}}</option>
+                {% endfor %}
+
+            </select>
+            <ul class="select-list" id="selectList">
+            </ul>
+
+
+
+        </div>
+    </div>
+
+    <div id="coordOverlay" class="coord-overlay"></div>
+
+
+
+
+    <div class="toolbar">
+
+        <button class="tool-button" id="pan-mode" title="Pan">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+                <path
+                    d="M8.00001 3.09779C8.00001 3.09779 4.03375 2.74194 3.38784 3.38785C2.74192 4.03375 3.09784 8 3.09784 8"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                    d="M8.00001 20.9022C8.00001 20.9022 4.03375 21.2581 3.38784 20.6122C2.74192 19.9662 3.09784 16 3.09784 16"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16 3.09779C16 3.09779 19.9663 2.74194 20.6122 3.38785C21.2581 4.03375 20.9022 8 20.9022 8"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16 20.9022C16 20.9022 19.9663 21.2581 20.6122 20.6122C21.2581 19.9662 20.9022 16 20.9022 16"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.0108 9.99847L20.0625 3.94678" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M9.99696 14.0024L3.63966 20.3807" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M9.99733 10.0024L3.84571 3.85889" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M13.9795 14.0024L20.5279 20.4983" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </button>
+
+        <button class="tool-button" id="zoom-mode" title="Zoom Area">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+                <path
+                    d="M19.4 19.4L22 22M20.7 14.85C20.7 11.6191 18.0809 9 14.85 9C11.6191 9 9 11.6191 9 14.85C9 18.0809 11.6191 20.7 14.85 20.7C18.0809 20.7 20.7 18.0809 20.7 14.85Z"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                    d="M19.075 19.075L22 22M12.9 14.85H14.85M14.85 14.85H16.8M14.85 14.85V12.9M14.85 14.85V16.8M20.7 14.85C20.7 11.6191 18.0809 9 14.85 9C11.6191 9 9 11.6191 9 14.85C9 18.0809 11.6191 20.7 14.85 20.7C18.0809 20.7 20.7 18.0809 20.7 14.85Z"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                    d="M2 6C2.1305 4.6645 2.4262 3.7663 3.09625 3.09625C3.7663 2.4262 4.6645 2.1305 6 2M6 22C4.6645 21.8695 3.7663 21.5738 3.09625 20.9037C2.4262 20.2337 2.1305 19.3355 2 18M22 6C21.8695 4.6645 21.5738 3.7663 20.9037 3.09625C20.2337 2.4262 19.3355 2.1305 18 2M2 10L2 14M14 2L10 2"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+        </button>
+
+        <button class="tool-button" id="reset-state" title="Reset View" id="reset-viw">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+                <path d="M17.5 17.5L22 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                <path
+                    d="M20 11C20 6.02944 15.9706 2 11 2C6.02944 2 2 6.02944 2 11C2 15.9706 6.02944 20 11 20C15.9706 20 20 15.9706 20 11Z"
+                    stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                <path d="M8 14L14 8M8 8L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </button>
+    </div>
+
+
+    <canvas id="gridCanvas" class="canvas-container"></canvas>
+    <script>
+        // Settings
+        const animationDuration = 5000 * 20;
+        const maxScale = 3000
+        const minScale = .05
+        const pixel_size = 8
+        const map_width = 50000
+        const base_size = [3125, 2500]
+        const isbn0 = 978000000000
+        const edgeScrollBorder = 50;
+        const scrollSpeed = 10;
+
+
+
+
+
+
+        var mode = "pan"
+        const zoomtoggle = document.getElementById('zoom-mode');
+        const pantoggle = document.getElementById('pan-mode');
+        toggleMode()
+        toggleMode()
+        pantoggle.addEventListener('click', () => { if (mode !== "pan") toggleMode() });
+        zoomtoggle.addEventListener('click', () => { if (mode !== "zoom") toggleMode() });
+
+
+        function storeList(listKey, list) {
+            try {
+                localStorage.setItem(listKey, JSON.stringify(list));
+            } catch (error) {
+                console.error("Error storing list in browser:", error);
+            }
+        }
+
+        function getList(listKey, initialValue) {
+            try {
+                const storedList = localStorage.getItem(listKey);
+                if (storedList) {
+                    return JSON.parse(storedList);
+                } else {
+                    return initialValue;
+                }
+            } catch (error) {
+                console.error("Error retrieving list from browser:", error);
+                return initialValue;
+            }
+        }
+
+        function resetList(listKey) {
+            try {
+                localStorage.removeItem(listKey);
+            } catch (error) {
+                console.error("Error resetting list in browser:", error);
+            }
+        }
+
+
+        const resetButton = document.getElementById('reset-state');
+        const map_select = document.getElementById("map-selector")
+        const selectList = document.getElementById('selectList');
+
+
+        map_select.addEventListener('change', handleSelectChange);
+
+        function handleSelectChange() {
+            const option = map_select.value
+
+            if (option === "") {
+                return
+            }
+            const color = "#FFFFFF"
+            const selected = map_select[map_select.selectedIndex]
+            const listItem = createselectItem(option, color, selected.text, true);
+            selectList.prepend(listItem)
+            map_select.value = ""
+        }
+
+
+
+
+        let layers = getList("layers", [])
+
+        setSelection()
+
+        resetButton.addEventListener('click', function () {
+            resetList("layers")
+            layers = getList("layers", [])
+            setSelection()
+            center()
+            draw()
+        })
+
+        function resetlayers() {
+            layers = getSelection()
+            storeList("layers", layers)
+            draw()
+        }
+
+        const observer = new MutationObserver((mutationsList, observer) => {
+            resetlayers()
+        })
+
+
+        observer.observe(selectList, { childList: true, subtree: true });
+
+
+
+        function getSelection() {
+            let listItems = selectList.querySelectorAll('li');
+            selects = [];
+            for (let i = listItems.length - 1; i >= 0; i--) {
+                const item = listItems[i];
+                selects.push({
+                    enabled: item.getAttribute("enabled") == "true" ? true : false,
+                    id: item.getAttribute("id"),
+                    color: item.getAttribute("color"),
+                    name: item.querySelector('div').textContent
+                });
+
+            }
+            return selects;
+        }
+
+        function setSelection() {
+
+            while (selectList.firstChild) {
+                selectList.removeChild(selectList.firstChild);
+            }
+
+            layers.forEach(function (item) {
+                const listItem = createselectItem(item["id"], item["color"], item["name"], item["enabled"]);
+                selectList.prepend(listItem)
+            })
+        }
+
+        function createselectItem(task, color, name, enabled) {
+            const listItem = document.createElement('li');
+
+            listItem.setAttribute("id", task)
+            listItem.setAttribute("color", color)
+
+            listItem.className = 'select-item';
+            listItem.draggable = true;
+
+            const itemText = document.createElement('span');
+            itemText.textContent = name.replace('🞡', "");
+
+
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.className = "layer-check checkmark";
+            checkbox.value = enabled
+
+
+            checkbox.addEventListener('change', () => {
+                // drawMap()
+                listItem.setAttribute("enabled", checkbox.checked)
+
+                resetlayers()
+            });
+
+            const colorInput = document.createElement('input');
+            colorInput.type = 'color';
+            colorInput.className = 'color-input';
+            colorInput.value = color;
+            colorInput.addEventListener('input', (e) => {
+                // drawMap()
+                listItem.setAttribute("color", e.target.value)
+
+                resetlayers()
+            });
+
+
+
+
+            var deleteicn = new DOMParser().parseFromString(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#000000" fill="none"><path d="M19.5 5.5L18.8803 15.5251C18.7219 18.0864 18.6428 19.3671 18.0008 20.2879C17.6833 20.7431 17.2747 21.1273 16.8007 21.416C15.8421 22 14.559 22 11.9927 22C9.42312 22 8.1383 22 7.17905 21.4149C6.7048 21.1257 6.296 20.7408 5.97868 20.2848C5.33688 19.3626 5.25945 18.0801 5.10461 15.5152L4.5 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /><path d="M3 5.5H21M16.0557 5.5L15.3731 4.09173C14.9196 3.15626 14.6928 2.68852 14.3017 2.39681C14.215 2.3321 14.1231 2.27454 14.027 2.2247C13.5939 2 13.0741 2 12.0345 2C10.9688 2 10.436 2 9.99568 2.23412C9.8981 2.28601 9.80498 2.3459 9.71729 2.41317C9.32164 2.7167 9.10063 3.20155 8.65861 4.17126L8.05292 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />    <path d="M9.5 16.5L9.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />    <path d="M14.5 16.5L14.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>',
+                'application/xml');
+
+            const removeButton = document.createElement("div");
+
+            removeButton.className = 'circular-button';
+            removeButton.textContent = 'X';
+            removeButton.addEventListener('click', () => {
+                selectList.removeChild(listItem);
+            });
+
+            const div = document.createElement('div');
+            div.className = 'list-item-container'
+            div.appendChild(checkbox);
+            div.appendChild(colorInput);
+            div.appendChild(itemText);
+            div.appendChild(removeButton);
+            listItem.appendChild(div);
+
+            listItem.addEventListener('dragstart', () => {
+                draggingElement = listItem;
+                listItem.classList.add('dragging');
+            });
+
+            listItem.addEventListener('dragend', () => {
+                draggingElement = null;
+                listItem.classList.remove('dragging');
+            });
+
+            return listItem;
+        }
+
+
+
+        selectList.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            const afterElement = getDragAfterElement(selectList, event.clientY);
+            if (afterElement == null) {
+                selectList.appendChild(draggingElement);
+            } else {
+                selectList.insertBefore(draggingElement, afterElement);
+            }
+        });
+
+
+
+        selectList.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            const afterElement = getDragAfterElement(selectList, event.clientY);
+            if (afterElement == null) {
+                selectList.appendChild(draggingElement);
+            } else {
+                selectList.insertBefore(draggingElement, afterElement);
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.select-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const coordOverlay = document.getElementById('coordOverlay');
+        let mouseInCanvas = false;
+
+
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let scale = parseFloat(urlParams.get('scale')) || 1;
+        let offsetX = parseFloat(urlParams.get('offsetX')) || 0;
+        let offsetY = parseFloat(urlParams.get('offsetY')) || 0;
+        const maxDepth = 5;
+        let edgeScrollActive = false;
+        let mouseX = 0;
+        let mouseY = 0;
+
+        // Zoom box 
+        let isDrawingZoomBox = false;
+        let zoomBoxStartX = 0;
+        let zoomBoxStartY = 0;
+        let zoomBoxEndX = 0;
+        let zoomBoxEndY = 0;
+
+        // Dragging  
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+
+        // Animation 
+        let isAnimating = false;
+        let targetScale = 1;
+        let targetOffsetX = 0;
+        let targetOffsetY = 0;
+
+        let animationStartTime = 0;
+
+
+        function center() {
+
+            continueanimation = false
+
+            offsetX = canvas.width / 4
+            offsetY = canvas.height / 8
+            scale = (canvas.width / 2) / 3125
+
+
+            updateUrlParams()
+
+        }
+
+        var image_store = {
+            "": NaN
+        }
+        function randomHEXColor() {
+
+            return '#' + (Math.random() * 0xFFFFFF << 0).toString(16).padStart(6, '0');
+
+        }
+
+
+        var deferList = []
+        async function rundeffered() {
+            const count = deferList.length
+
+            deferList.forEach(element => {
+                element()
+            });
+
+            deferList = []
+            if (count > 0) {
+                setTimeout(draw(), 100);
+            }
+        }
+
+
+        function drawImage(x, y, layer, id, depth, width, height) {
+            if (!layer) {
+                return
+            }
+
+            const pyramid = `tile/${layer}/${depth}/${id}.png`
+            if (image_store.hasOwnProperty(pyramid)) {
+                imgx = image_store[pyramid]
+                if (imgx.isloaded) {
+                    ctx.drawImage(imgx.img, x, y, width, height)
+                    return true
+                }
+            } else {
+                deferList.push(function () {
+                    let img = new Image();
+                    img.onload = function () {
+                        image_store[pyramid].isloaded = true
+                        // draw()
+                    }
+                    img.onerror = function (e) {
+                        console.log(e)
+                    }
+                    img.src = pyramid
+                    image_store[pyramid] = {
+                        img,
+                        isloaded: false,
+                        pixels: undefined
+                    }
+                })
+            }
+
+            return false
+        }
+
+
+
+
+
+        function isbnAnswer(clean_isbn) {
+            components = {
+                "prefix": JSON.stringify(clean_isbn).slice(0, 3),
+            }
+            const year = components["prefix"] == "978" ? "2007-2018" : "2019+"
+            return `Year: ${year} PerPixel: ${intRounds(clean_isbn)}`
+        }
+
+
+        function drawGrid(x, y, width, height, depth, target, visibleLeft, visibleRight, visibleTop, visibleBottom, cellIndex, color) {
+            if (depth >= maxDepth) return;
+            // Check if cell is outside visible area
+
+            if (x + width < visibleLeft || x > visibleRight || y + height < visibleTop || y > visibleBottom) {
+                return;
+            }
+
+            if (depth == target) {
+                var d = false
+
+
+
+                var index = 0
+                ctx.globalCompositeOperation = "screen";
+
+                var step = 0
+
+                layers.forEach(function (layer) {
+                    if (!layer.enabled) {
+                        return
+                    }
+
+
+
+                    ctx.save()
+                    ctx.globalAlpha = 1 - index * .3
+                    const drawn = drawImage(x + (index * .003), y + (index * .003), layer.id, cellIndex, depth, width, height)
+
+
+                    if (drawn) {
+                        ctx.globalCompositeOperation = "multiply"
+                        ctx.fillStyle = layer.color
+                        ctx.fillRect(x, y, width, height)
+                    }
+                    ctx.restore()
+                    index++
+                    step++
+                })
+
+                ctx.globalCompositeOperation = "normal"
+
+                ctx.globalAlpha = 1
+
+
+                if (d) {
+
+
+                    return
+                }
+            }
+
+
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1 / scale;
+            ctx.strokeRect(x, y, width, height);
+
+            // // Draw cell index text
+            // ctx.fillStyle = color;
+            // ctx.font = `${Math.max(10, 12 / scale)}px Arial`; 
+            // ctx.textAlign = 'center';
+            // ctx.textBaseline = 'middle';
+            // ctx.fillText(
+            //     `${cellIndex}`,
+            //     // cellIndex,
+            //     x + width / 2,
+            //     y + height / 2
+            // );
+            // if (depth == target - 1) {
+            //     // ctx.globalCompositeOperation = 'normal';
+
+            //     if (layers[0].id && layers[0].enabled && drawImage(x, y, layers[0].id, cellIndex, depth, width, height)) {
+            //     }
+            //     // ctx.globalCompositeOperation = pcomp;
+
+            // }
+
+
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+
+            child_color = "#5555557a"
+
+            if (depth < maxDepth - 1) {
+                // Recursively draw sub-cells with updated indices
+                drawGrid(x, y, halfWidth, halfHeight, depth + 1, target, visibleLeft, visibleRight, visibleTop, visibleBottom, cellIndex + "0", child_color);
+                drawGrid(x + halfWidth, y, halfWidth, halfHeight, depth + 1, target, visibleLeft, visibleRight, visibleTop, visibleBottom, cellIndex + "1", child_color);
+                drawGrid(x, y + halfHeight, halfWidth, halfHeight, depth + 1, target, visibleLeft, visibleRight, visibleTop, visibleBottom, cellIndex + "2", child_color);
+                drawGrid(x + halfWidth, y + halfHeight, halfWidth, halfHeight, depth + 1, target, visibleLeft, visibleRight, visibleTop, visibleBottom, cellIndex + "3", child_color);
+            }
+        }
+
+        var currentTarget = 0
+
+        var maptarget = Math.pow(maxDepth - 1, 2)
+
+        var scale_size = {
+            pixel: 100,
+            unit: "U"
+        }
+
+
+        function draw() {
+            scale_size = scaleRounds(scale)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.imageSmoothingEnabled = false // currentTarget < 1 ? true:  false;
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+
+            ctx.scale(scale, scale);
+
+            const visibleLeft = -offsetX / scale;
+            const visibleRight = (canvas.width - offsetX) / scale;
+            const visibleTop = -offsetY / scale;
+            const visibleBottom = (canvas.height - offsetY) / scale;
+
+            currentTarget = Math.min(Math.floor(scale / pixel_size), maxDepth - 1)
+            drawGrid(0, 0, base_size[0], base_size[1], 0, currentTarget, visibleLeft, visibleRight, visibleTop, visibleBottom, "0");
+
+
+
+
+            ctx.globalCompositeOperation = "normal";
+
+            ctx.restore();
+
+
+            const corner = [canvas.width - 20, canvas.height - 8]
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+            ctx.beginPath();
+            ctx.moveTo(corner[0], corner[1]);
+            ctx.lineTo(corner[0] - scale_size.pixel, corner[1]);
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+            ctx.beginPath();
+            ctx.moveTo(corner[0], corner[1] + 4);
+            ctx.lineTo(corner[0] - scale_size.pixel, corner[1] + 4);
+            ctx.stroke();
+            ctx.fillStyle = "white";
+
+
+
+
+            ctx.font = "Arial";
+            ctx.fillText(
+                `${scale_size.unit}`,
+                corner[0] - scale_size.pixel,
+                corner[1] - 4
+            );
+
+            if (isDrawingZoomBox) {
+                ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                const x = Math.min(zoomBoxStartX, zoomBoxEndX);
+                const y = Math.min(zoomBoxStartY, zoomBoxEndY);
+                const width = Math.abs(zoomBoxEndX - zoomBoxStartX);
+                const height = Math.abs(zoomBoxEndY - zoomBoxStartY);
+                ctx.strokeRect(x, y, width, height);
+            }
+
+            rundeffered()
+        }
+
+        function updateUrlParams() {
+            const newParams = new URLSearchParams({
+                scale: scale.toFixed(3),
+                offsetX: Math.round(offsetX),
+                offsetY: Math.round(offsetY)
+            });
+            window.history.replaceState({}, '', `?${newParams.toString()}`);
+        }
+
+
+        var continueanimation = false
+
+        function startanimation() {
+            continueanimation = true
+            requestAnimationFrame(animateZoom);
+        }
+
+        function animateZoom() {
+            if (!isAnimating) return;
+            const currentTime = Date.now();
+            const elapsedTime = currentTime - animationStartTime;
+            const progress = Math.min(elapsedTime / animationDuration, 1);
+
+            // Interpolate scale and offset
+            scale = scale + (targetScale - scale) * progress;
+            offsetX = offsetX + (targetOffsetX - offsetX) * progress;
+            offsetY = offsetY + (targetOffsetY - offsetY) * progress;
+
+            draw();
+
+            if (continueanimation && progress < .98) {
+                requestAnimationFrame(animateZoom);
+            } else {
+                isAnimating = false;
+                updateUrlParams()
+            }
+        }
+
+
+        function handleZoomToBox() {
+            const gridX1 = (zoomBoxStartX - offsetX) / scale;
+            const gridY1 = (zoomBoxStartY - offsetY) / scale;
+            const gridX2 = (zoomBoxEndX - offsetX) / scale;
+            const gridY2 = (zoomBoxEndY - offsetY) / scale;
+
+            const boxWidth = Math.abs(gridX2 - gridX1);
+            const boxHeight = Math.abs(gridY2 - gridY1);
+
+            if (boxWidth === 0 || boxHeight === 0) return;
+
+            const scaleX = canvas.width / boxWidth;
+            const scaleY = canvas.height / boxHeight;
+            targetScale = Math.min(Math.min(scaleX, scaleY), maxScale);
+
+            const centerX = (gridX1 + gridX2) / 2;
+            const centerY = (gridY1 + gridY2) / 2;
+
+            targetOffsetX = canvas.width / 2 - centerX * targetScale;
+            targetOffsetY = canvas.height / 2 - centerY * targetScale;
+
+            isAnimating = true;
+            animationStartTime = Date.now();
+            startanimation()
+        }
+
+        function handleMouseDown(e) {
+            continueanimation = false
+            if (mode === 'zoom') {
+                isDrawingZoomBox = true;
+                zoomBoxStartX = e.clientX;
+                zoomBoxStartY = e.clientY;
+                zoomBoxEndX = e.clientX;
+                zoomBoxEndY = e.clientY;
+            } else if (mode === 'pan') {
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            }
+        }
+
+        let global_position = {
+
+            ISBN: 0,
+            X: 0,
+            Y: 0,
+
+        }
+
+        function handleMouseMove(e) {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            if (mode === 'zoom' && isDrawingZoomBox) {
+                zoomBoxEndX = e.clientX;
+                zoomBoxEndY = e.clientY;
+                draw();
+            } else if (mode === 'pan' && isDragging) {
+                const deltaX = e.clientX - lastMouseX;
+                const deltaY = e.clientY - lastMouseY;
+                offsetX += deltaX;
+                offsetY += deltaY;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                draw();
+            }
+
+
+            if (mouseInCanvas) {
+                const gridX = (e.clientX - offsetX) / scale;
+                const gridY = (e.clientY - offsetY) / scale;
+
+                if (gridX < 0 || gridY < 0 || gridX > base_size[0] || gridY > base_size[1]) {
+                    coordOverlay.style.display = 'none';
+                    return
+                }
+                coordOverlay.style.display = 'block';
+
+                // Clamp values to canvas dimensions
+                const clampedX = Math.max(0, Math.min(base_size[0], gridX)) * (maptarget);
+                const clampedY = Math.max(0, Math.min(base_size[1], gridY)) * (maptarget);
+                positiionUpdate(clampedX, clampedY)
+            }
+
+            if (mode === 'zoom' && !isDragging) {
+                checkEdgeScroll();
+            }
+        }
+
+
+        function positiionUpdate(clampedX, clampedY) {
+            global_position = {
+                ISBN: isbn0 + Math.floor(clampedY) * map_width + Math.floor(clampedX),
+                X: (clampedX).toFixed(1),
+                Y: (clampedY).toFixed(1)
+            }
+
+            coordOverlay.textContent =
+                `ISBN: ${global_position.ISBN} X: ${(clampedX).toFixed(1)} Y: ${(clampedY).toFixed(1)}`;
+        }
+
+        const sizefactor = base_size[0] * maxDepth
+
+        function scaleRounds(zoom) {
+
+            const roundingSteps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 2500, 5000, 10000, 50000];
+
+            const metersPerPixel = (sizefactor / (scale))
+            const targetPixels = 100;
+            const targetMeters = metersPerPixel * targetPixels;
+            const targetKm = targetMeters / 1000;
+
+
+            let selectedScale = roundingSteps.find(v => v >= targetKm) || roundingSteps[roundingSteps.length - 1];
+
+            const scalePixels = (selectedScale * 1000) / metersPerPixel;
+
+            return { unit: selectedScale, pixel: scalePixels };
+        }
+
+
+
+        function checkEdgeScroll() {
+            const scroll = {
+                x: 0,
+                y: 0,
+                left: mouseX < edgeScrollBorder,
+                right: mouseX > canvas.width - edgeScrollBorder,
+                top: mouseY < edgeScrollBorder,
+                bottom: mouseY > canvas.height - edgeScrollBorder
+            };
+
+            if (scroll.left) scroll.x = -1;
+            if (scroll.right) scroll.x = 1;
+            if (scroll.top) scroll.y = -1;
+            if (scroll.bottom) scroll.y = 1;
+
+            if (scroll.x !== 0 || scroll.y !== 0) {
+                if (!edgeScrollActive) {
+                    continueanimation = false
+                    edgeScrollActive = true;
+
+                    requestAnimationFrame(edgeScrollLoop);
+                }
+            } else {
+                edgeScrollActive = false;
+            }
+        }
+
+        function edgeScrollLoop() {
+            if (!edgeScrollActive) return;
+
+            const scroll = {
+                x: 0,
+                y: 0
+            };
+
+            if (mouseX < edgeScrollBorder) scroll.x = 1;
+            if (mouseX > canvas.width - edgeScrollBorder) scroll.x = -1;
+            if (mouseY < edgeScrollBorder) scroll.y = 1;
+            if (mouseY > canvas.height - edgeScrollBorder) scroll.y = -1;
+
+            offsetX += scroll.x * scrollSpeed;
+            offsetY += scroll.y * scrollSpeed;
+
+            draw();
+            requestAnimationFrame(edgeScrollLoop);
+        }
+
+
+        function handleMouseUp(e) {
+            if (mode === 'zoom' && isDrawingZoomBox) {
+                isDrawingZoomBox = false;
+                handleZoomToBox();
+            }
+            isDragging = false;
+            updateUrlParams();
+        }
+
+        function toggleMode() {
+            if (mode === 'zoom') {
+                pantoggle.classList.add("active")
+                zoomtoggle.classList.remove("active")
+                mode = 'pan';
+            } else {
+                pantoggle.classList.remove("active")
+                zoomtoggle.classList.add("active")
+                mode = 'zoom';
+            }
+        }
+
+        function handleWheel(event) {
+
+            event.preventDefault()
+            continueanimation = false
+            const zoomFactor = 0.1;
+            const mouseX = event.clientX - offsetX;
+            const mouseY = event.clientY - offsetY;
+
+            if (event.deltaY < 0) {
+
+                if (scale > maxScale) {
+                    return
+                }
+                scale *= 1 + zoomFactor;
+                offsetX -= mouseX * zoomFactor;
+                offsetY -= mouseY * zoomFactor;
+            } else {
+
+
+                if (scale < minScale) {
+                    return
+                }
+                scale /= 1 + zoomFactor;
+                offsetX += mouseX * zoomFactor / (1 + zoomFactor);
+                offsetY += mouseY * zoomFactor / (1 + zoomFactor);
+            }
+
+
+
+            draw();
+            updateUrlParams();
+        }
+
+
+        function handleTouchStart(event) {
+            if (event.touches.length === 2) {
+                // Start pinch zoom
+                initialDistance = getDistance(event.touches[0], event.touches[1]);
+                lastScale = scale;
+            } else if (event.touches.length === 1) {
+                // Start dragging
+                isDragging = true;
+                lastMouseX = event.touches[0].clientX;
+                lastMouseY = event.touches[0].clientY;
+            }
+        }
+
+
+        function handleTouchMove(event) {
+            if (event.touches.length === 2) {
+                // Handle pinch zoom
+                const currentDistance = getDistance(event.touches[0], event.touches[1]);
+                if (initialDistance !== null) {
+                    const newScale = (currentDistance / initialDistance) * lastScale;
+                    scale = newScale;
+                    draw();
+                }
+            } else if (event.touches.length === 1 && isDragging) {
+                // Handle dragging
+                const touch = event.touches[0];
+                const deltaX = touch.clientX - lastMouseX;
+                const deltaY = touch.clientY - lastMouseY;
+
+                offsetX += deltaX;
+                offsetY += deltaY;
+
+                lastMouseX = touch.clientX;
+                lastMouseY = touch.clientY;
+
+                draw();
+            }
+        }
+
+        function handleTouchEnd() {
+            if (event.touches.length === 0) {
+                initialDistance = null;
+                isDragging = false;
+            }
+        }
+
+
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchmove', handleTouchMove);
+        canvas.addEventListener('touchend', handleTouchEnd);
+
+        canvas.addEventListener('wheel', handleWheel);
+        canvas.addEventListener('mouseenter', () => {
+            mouseInCanvas = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            mouseInCanvas = false;
+        });
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            edgeScrollActive = false;
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            draw();
+            updateUrlParams();
+        });
+
+
+
+
+
+
+
+        function newKeyEvents(key, holdDuration = 50) {
+            let isKeyPressed = false;
+            let keyHoldTimeout = null;
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === key && !isKeyPressed) {
+                    isKeyPressed = true;
+
+                    const keyHoldStartEvent = new CustomEvent(`${key}HoldStart`);
+                    document.dispatchEvent(keyHoldStartEvent);
+
+                    keyHoldTimeout = setTimeout(() => {
+                        const keyHoldEvent = new CustomEvent(`${key}Hold`);
+                        document.dispatchEvent(keyHoldEvent);
+                    }, holdDuration);
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (e.key === key && isKeyPressed) {
+                    const keyHoldEndEvent = new CustomEvent(`${key}HoldEnd`);
+                    document.dispatchEvent(keyHoldEndEvent);
+
+                    isKeyPressed = false;
+                    if (keyHoldTimeout) {
+                        clearTimeout(keyHoldTimeout);
+                    }
+                }
+            });
+        }
+
+        newKeyEvents('Control');
+
+
+        document.addEventListener('ControlHold', () => {
+            if (mode !== "zoom") {
+                toggleMode()
+            }
+        });
+
+
+        document.addEventListener('ControlHoldEnd', () => {
+            if (mode === "zoom") {
+                toggleMode()
+            }
+        });
+
+
+
+        canvas.addEventListener("dblclick", function () {
+            window.open(`https://annas-archive.org/search?q=${global_position.ISBN}`);
+
+            console.log(location.ISBN)
+            //   myDiv.style.backgroundColor = "yellow"; // Change background color on double click
+        });
+        function copyText(text, event) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showFeedback("Copied!", event, "lightgreen");
+                })
+                .catch(err => {
+                    showFeedback("Copy failed!", event, "lightcoral");
+                });
+        }
+
+
+
+        function showFeedback(message, event, color) {
+            const feedback = document.createElement('div');
+            feedback.textContent = message;
+            feedback.style.position = 'absolute';
+            feedback.style.top = 0  //event.clientY ?? 0 + 'px';
+            feedback.style.right = 0 // event.clientX ?? 0 + 'px';
+            feedback.style.backgroundColor = color;
+            feedback.style.padding = '5px';
+            feedback.style.borderRadius = '5px';
+            document.body.appendChild(feedback);
+            setTimeout(() => {
+                feedback.remove();
+            }, 1500);
+        }
+
+
+
+        document.addEventListener("keydown", function (event) {
+            const isCtrl = event.ctrlKey || event.metaKey;
+            const isCKey = event.key === "c" || event.key === "C";
+
+            if (isCtrl && isCKey) {
+
+
+                copyText(global_position.ISBN)
+            }
+        });
+
+
+        draw();
+    </script>
+</body>
+
+</html>
